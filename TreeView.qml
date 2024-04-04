@@ -13,17 +13,6 @@ ScrollView {
     //EDIT
     property bool __activateItemOnSingleClick: false //__style ? __style.activateItemOnSingleClick : false
 
-    /*
-    //EDIT: NOT IN CONTROLS 2 VERSION OF ScrollView
-    frameVisible: true
-    */
-
-    /*
-    //EDIT: TODO: RESTORE SCROLLBAR FUNCTIONALITY
-    __scrollBarTopMargin: headerVisible && (listView.transientScrollBars || Qt.platform.os === "osx")
-                          ? listView.headerItem.height : 0
-    */
-
     default property alias __columns: root.data
     property alias __currentRow: listView.currentIndex
     property alias __currentRowItem: listView.currentItem
@@ -135,7 +124,6 @@ ScrollView {
         onCanceled: {
             pressedIndex = undefined;
             pressedColumn = -1;
-            autoScroll = 0;
             selectOnRelease = false;
         }
         onClicked: {
@@ -180,19 +168,6 @@ ScrollView {
             selectOnRelease = false;
         }
         onPositionChanged: {
-            // NOTE: Testing for pressed is not technically needed, at least
-            // until we decide to support tooltips or some other hover feature
-            if (mouseY > __listView.height && pressed) {
-                if (autoScroll === 1)
-                    return;
-                autoScroll = 1;
-            } else if (mouseY < 0 && pressed) {
-                if (autoScroll === 2)
-                    return;
-                autoScroll = 2;
-            } else {
-                autoScroll = 0;
-            }
             if (pressed && containsMouse) {
                 var oldPressedIndex = pressedIndex;
                 var pressedRow = __listView.indexAt(0, mouseY + __listView.contentY);
@@ -242,12 +217,9 @@ ScrollView {
             }
             pressedIndex = undefined;
             pressedColumn = -1;
-            autoScroll = 0;
             selectOnRelease = false;
         }
     }
-    property color alternateBackgroundColor: "white"
-    property bool alternatingRowColors: false
 
     //EDIT: ADDED
     property color backgroundColor: "white"
@@ -329,7 +301,7 @@ ScrollView {
     property Component rowDelegate: Rectangle {
         property color selectedColor: root.activeFocus ? "lightblue" : "grey"
 
-        color: styleData.selected ? selectedColor : !styleData.alternate ? alternateBackgroundColor : backgroundColor
+        color: styleData.selected ? selectedColor : backgroundColor
         height: rowHeight //Math.round(TextSingleton.implicitHeight * 1.2)
 
     }
@@ -882,59 +854,6 @@ ScrollView {
             }
         }
 
-        /*
-        function scrollIfNeeded(key) {
-            var diff = key === Qt.Key_PageDown ? height :
-                       key === Qt.Key_PageUp ? -height : 0
-            if (diff !== 0)
-                __verticalScrollBar.value += diff
-        }
-        */
-
-        // Fills extra rows with alternate color
-        Column {
-            id: rowfiller
-
-            property int paddedRowCount: rowHeight != 0 ? height / rowHeight : 0
-            property int rowHeight: Math.floor(rowSizeItem.implicitHeight)
-
-            height: listView.model && listView.model.count ? (viewport.height - listView.contentHeight) : 0
-            visible: alternatingRowColors
-            width: parent.width
-            y: listView.contentHeight - listView.contentY + listView.originY
-
-            Loader {
-                id: rowSizeItem
-
-                property QtObject styleData: QtObject {
-                    property bool alternate: false
-                    property bool hasActiveFocus: false
-                    property bool pressed: false
-                    property bool selected: false
-                }
-
-                sourceComponent: root.rowDelegate
-                visible: false
-            }
-            Repeater {
-                model: visible ? parent.paddedRowCount : 0
-
-                Loader {
-                    readonly property var model: null
-                    readonly property var modelData: null
-                    property QtObject styleData: QtObject {
-                        readonly property bool alternate: (index + __listView.count) % 2 === 1
-                        readonly property bool hasActiveFocus: false
-                        readonly property bool pressed: false
-                        readonly property bool selected: false
-                    }
-
-                    height: rowfiller.rowHeight
-                    sourceComponent: root.rowDelegate
-                    width: rowfiller.width
-                }
-            }
-        }
         ListModel {
             id: columnModel
         }
@@ -945,7 +864,6 @@ ScrollView {
             FocusScope {
                 id: rowitem
 
-                property bool alternate: alternatingRowColors && rowIndex % 2 === 1
                 property Item branchDecoration: null
                 property var itemModel
                 property var itemModelData
@@ -973,7 +891,6 @@ ScrollView {
                     // these properties are exposed to the row delegate
                     // Note: these properties should be mirrored in the row filler as well
                     property QtObject styleData: QtObject {
-                        readonly property bool alternate: rowitem.alternate
                         readonly property bool hasActiveFocus: rowitem.activeFocus
                         readonly property bool pressed: rowitem.rowIndex === __mouseArea.pressedRow
                         readonly property int row: rowitem.rowIndex

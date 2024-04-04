@@ -11,11 +11,11 @@ import com.example 1.0
 ScrollView {
     id: root
 
-    property bool alternatingRowColors: true
+    property bool alternatingRowColors: false
 
     //EDIT: ADDED
     property color backgroundColor: "white"
-    property color alternateBackgroundColor: "lightgrey"
+    property color alternateBackgroundColor: "white"
     property color textColor: "black"
     property real rowFontSize: 20
     property real rowHeight: 20
@@ -38,7 +38,6 @@ ScrollView {
     property int selectionMode: enumSelectionMode.singleSelection
 
     property bool headerVisible: true
-    property alias backgroundVisible: colorRect.visible
 
     //EDIT: FROM BasicTableViewStyle
     property Component itemDelegate: Item {
@@ -306,20 +305,6 @@ ScrollView {
                 __verticalScrollBar.value += diff
         }
         */
-
-        SystemPalette {
-            id: palette
-            colorGroup: enabled ? SystemPalette.Active : SystemPalette.Disabled
-        }
-
-        Rectangle {
-            id: colorRect
-            parent: listView
-
-            anchors.fill: parent
-            color: palette.base
-            z: -2
-        }
 
         // Fills extra rows with alternate color
         Column {
@@ -779,11 +764,12 @@ ScrollView {
                         height: rowHeight //16
 
                         Text {
+                            id: _indicator
                             visible: styleData.column === 0 && styleData.hasChildren
                             text: styleData.isExpanded ? "\u25bc" : "\u25b6"
 
                             //EDIT
-                            font.pixelSize: rowFontSize
+                            font.pixelSize: 0.7*rowFontSize
                             color: !root.activeFocus || styleData.selected ? styleData.textColor : "#666"
 
                             renderType: Text.NativeRendering
@@ -829,36 +815,6 @@ ScrollView {
         property int pressedColumn: -1
         readonly property alias currentRow: root.__currentRow
         readonly property alias currentIndex: root.currentIndex
-
-        // Handle vertical scrolling whem dragging mouse outside boundaries
-        property int autoScroll: 0 // 0 -> do nothing; 1 -> increment; 2 -> decrement
-        property bool shiftPressed: false // forward shift key state to the autoscroll timer
-
-        Timer {
-            running: mouseArea.autoScroll !== 0  //&& __verticalScrollBar.visible
-            interval: 20
-            repeat: true
-            onTriggered: {
-                var oldPressedIndex = mouseArea.pressedIndex
-                var row
-                if (mouseArea.autoScroll === 1) {
-                    __listView.incrementCurrentIndexBlocking();
-                    row = __listView.indexAt(0, __listView.height + __listView.contentY)
-                    if (row === -1)
-                        row = __listView.count - 1
-                } else {
-                    __listView.decrementCurrentIndexBlocking();
-                    row = __listView.indexAt(0, __listView.contentY)
-                }
-
-                var index = modelAdaptor.mapRowToModelIndex(row)
-                if (index !== oldPressedIndex) {
-                    mouseArea.pressedIndex = index
-                    var modifiers = mouseArea.shiftPressed ? Qt.ShiftModifier : Qt.NoModifier
-                    mouseArea.mouseSelect(index, modifiers, true /* drag */)
-                }
-            }
-        }
 
         function mouseSelect(modelIndex, modifiers, drag) {
             if (!selection) {

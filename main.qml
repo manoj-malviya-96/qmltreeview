@@ -64,56 +64,9 @@ import com.example 1.0
 
 ApplicationWindow {
     visible: true
-    width: 640
-    height: 480
+    width: 400
+    height: 640
     title: qsTr("File System")
-
-    menuBar: MenuBar {
-        Menu {
-            title: qsTr("File")
-            MenuItem {
-                text: qsTr("Exit")
-                onTriggered: Qt.quit();
-            }
-        }
-    }
-
-    Row {
-        id: row
-        anchors.top: parent.top
-        anchors.topMargin: 12
-        anchors.horizontalCenter: parent.horizontalCenter
-
-        //REPLACED BY ButtonGroup
-        /*
-        ExclusiveGroup {
-            id: eg
-        }
-        */
-
-        //NEW
-        ButtonGroup {
-            buttons: buttons.children
-            exclusive: true
-        }
-
-        //ADDED: WRAPPED INSIDE ROW
-        Row {
-            id: buttons
-
-            Repeater {
-                id: buttonRepeater
-                model: [ "None", "Single", "Extended", "Multi", "Contig."]
-                Button {
-                    text: modelData
-                    //exclusiveGroup: eg
-                    checkable: true
-                    checked: index === 1
-                    onClicked: view.selectionMode = index
-                }
-            }
-        }
-    }
 
     ItemSelectionModel {
         id: sel
@@ -123,36 +76,18 @@ ApplicationWindow {
     TreeView {
         id: view
         anchors.fill: parent
-        anchors.margins: 2 * 12 + row.height
+        anchors.margins: 2 * 12
         model: fileSystemModel
         rootIndex: rootPathIndex
         selection: sel
+        headerVisible: false
+
+        selectionMode: 4
 
         TableViewColumn {
             title: "Name"
             role: "fileName"
-            resizable: true
-        }
-
-        TableViewColumn {
-            title: "Size"
-            role: "size"
-            resizable: true
-            horizontalAlignment : Text.AlignRight
-            width: 70
-        }
-
-        TableViewColumn {
-            title: "Permissions"
-            role: "displayableFilePermissions"
-            resizable: true
-            width: 100
-        }
-
-        TableViewColumn {
-            title: "Date Modified"
-            role: "lastModified"
-            resizable: true
+            resizable: false
         }
 
         onActivated : {
